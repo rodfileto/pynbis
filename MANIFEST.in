@@ -1,0 +1,25 @@
+
+# Include necessary files in source distribution
+include README.md
+include LICENSE
+include NIST_DISCLAIMER.txt
+include pyproject.toml
+include setup.py
+
+# Include all NBIS source files
+recursive-include nbis_src *.c *.h *.mak *.txt
+recursive-include pynbis *.py *.pyi *.typed
+
+# Include documentation
+recursive-include docs *.md *.rst
+
+# Include examples
+recursive-include examples *.py *.md
+
+# Include tests
+recursive-include tests *.py
+
+# Exclude compiled files
+global-exclude *.pyc *.pyo *.so *.o *.a *.exe
+global-exclude __pycache__
+global-exclude .DS_Store
