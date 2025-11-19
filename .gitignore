@@ -1,3 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+
+# Testing
+.pytest_cache/
+.coverage
+.tox/
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
 # Local datasets and large archives (keep out of VCS)
 data/
 datasets/
@@ -6,3 +39,8 @@ datasets/
 *.tar
 *.tar.gz
 *.tar.xz
+
+# OS
+.DS_Store
+Thumbs.db
+
