@@ -1,0 +1,16 @@
+numpy>=1.20.0
+
+[all]
+pynbis[dev,imaging]
+
+[dev]
+pytest>=7.0.0
+pytest-cov>=4.0.0
+black>=22.0.0
+mypy>=1.0.0
+ruff>=0.1.0
+
+[imaging]
+Pillow>=9.0.0
+scipy>=1.7.0
+opencv-python>=4.5.0

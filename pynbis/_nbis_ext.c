@@ -309,15 +309,15 @@ static PyObject* nbis_compute_nfiq(PyObject *self, PyObject *args, PyObject *kwa
     /* Compute NFIQ */
     int nfiq_value;
     float conf_value;
-    int img_dir = 1;  /* 1 = not rotated */
-    int ret_code;
+    int optflag = 0;
     
     int ret = comp_nfiq(&nfiq_value, &conf_value, image_data, width, height,
-                        depth, ppi, &ret_code);
+                        depth, ppi, &optflag);
     
     free(image_data);
     
-    if (ret != 0) {
+    /* ret: 0=success; >0 are algorithm conditions (e.g., EMPTY_IMG, TOO_FEW_MINUTIAE); <0 indicates system error */
+    if (ret < 0) {
         PyErr_SetString(PyExc_RuntimeError, "NFIQ computation failed");
         return NULL;
     }
@@ -325,7 +325,7 @@ static PyObject* nbis_compute_nfiq(PyObject *self, PyObject *args, PyObject *kwa
     return Py_BuildValue("{s:i,s:f,s:i}",
                          "quality", nfiq_value,
                          "confidence", conf_value,
-                         "return_code", ret_code);
+                         "return_code", ret);
 }
 
 /*******************************************************************************
@@ -457,5 +457,9 @@ static struct PyModuleDef nbismodule = {
 
 PyMODINIT_FUNC PyInit__nbis_ext(void) {
     import_array();
+    /* Ensure Bozorth uses a valid error stream */
+    if (errorfp == NULL) {
+        errorfp = stderr;
+    }
     return PyModule_Create(&nbismodule);
 }

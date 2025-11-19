@@ -28,19 +28,22 @@ def get_nbis_sources():
     
     # Get all .c files from core directories
     # Exclude files that are not needed or have complex dependencies
-    excluded_files = ['to_type9.c', 'update.c']  # ANSI/NIST format related
+    excluded_files = ['to_type9.c', 'update.c', 'results.c']  # exclude ANSI/NIST + mindtct results writer
     
     for src_dir in core_dirs:
         if src_dir.exists():
             c_files = list(src_dir.glob("*.c"))
             for f in c_files:
                 if f.name not in excluded_files:
-                    sources.append(str(f))
+                    # Use POSIX-style paths relative to setup.py location
+                    rel = Path(os.path.relpath(f, here)).as_posix()
+                    sources.append(rel)
     
     # Common library sources (selective - only what we need)
     # These directories contain utility functions used by the core algorithms
     common_subdirs = [
         "util",     # Utility functions
+        "ioutil",   # File I/O helpers (read_ushort, etc.)
         "mlp",      # Multi-layer perceptron (for NFIQ)
         "ihead",    # Image header utilities
         "image",    # Image manipulation
@@ -54,7 +57,8 @@ def get_nbis_sources():
             excluded = ['nistcom.c', 'readihdr.c']
             for f in c_files:
                 if f.name not in excluded:
-                    sources.append(str(f))
+                    rel = Path(os.path.relpath(f, here)).as_posix()
+                    sources.append(rel)
     
     # Math libraries (needed by NFIQ)
     math_dirs = [
@@ -65,21 +69,30 @@ def get_nbis_sources():
     for src_dir in math_dirs:
         if src_dir.exists():
             c_files = list(src_dir.glob("*.c"))
-            sources.extend([str(f) for f in c_files])
+            for f in c_files:
+                rel = Path(os.path.relpath(f, here)).as_posix()
+                sources.append(rel)
+
+    # PCASYS MLP sources (required by NFIQ's MLP runtime)
+    pcasys_mlp_dir = nbis_src / "pcasys" / "src" / "lib" / "mlp"
+    if pcasys_mlp_dir.exists():
+        for f in pcasys_mlp_dir.glob("*.c"):
+            rel = Path(os.path.relpath(f, here)).as_posix()
+            sources.append(rel)
     
     return sources
 
 def get_nbis_includes():
     """Get all required NBIS include directories."""
     includes = [
-        str(nbis_src / "bozorth3" / "include"),
-        str(nbis_src / "mindtct" / "include"),
-        str(nbis_src / "nfiq" / "include"),
-        str(nbis_src / "commonnbis" / "include"),
-        str(nbis_src / "an2k" / "include"),
-        str(nbis_src / "pcasys" / "include"),
-        str(nbis_src / "imgtools" / "include"),
-        str(nbis_src / "commonnbis" / "include" / "mlp"),
+        str((nbis_src / "bozorth3" / "include").relative_to(here).as_posix()),
+        str((nbis_src / "mindtct" / "include").relative_to(here).as_posix()),
+        str((nbis_src / "nfiq" / "include").relative_to(here).as_posix()),
+        str((nbis_src / "commonnbis" / "include").relative_to(here).as_posix()),
+        str((nbis_src / "an2k" / "include").relative_to(here).as_posix()),
+        str((nbis_src / "pcasys" / "include").relative_to(here).as_posix()),
+        str((nbis_src / "imgtools" / "include").relative_to(here).as_posix()),
+        str((nbis_src / "commonnbis" / "include" / "mlp").relative_to(here).as_posix()),
     ]
     return includes
 
