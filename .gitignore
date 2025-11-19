@@ -1,0 +1,8 @@
+# Local datasets and large archives (keep out of VCS)
+data/
+datasets/
+*.zip
+*.7z
+*.tar
+*.tar.gz
+*.tar.xz

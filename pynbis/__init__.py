@@ -29,6 +29,8 @@ from .core import (
     QualityResult,
 )
 
+from .utils import decode_wsq
+
 __all__ = [
     "extract_minutiae",
     "match_fingerprints",
@@ -39,4 +41,5 @@ __all__ = [
     "Minutia",
     "MatchResult",
     "QualityResult",
+    "decode_wsq",
 ]

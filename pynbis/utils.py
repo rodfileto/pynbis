@@ -216,3 +216,54 @@ def get_roi(image: npt.NDArray[np.uint8],
     x_max = (np.where(cols)[0][-1] + 1) * block_size
     
     return x_min, y_min, x_max, y_max
+
+
+def decode_wsq(wsq_data: Union[bytes, str, Path]) -> Tuple[npt.NDArray[np.uint8], int, bool]:
+    """
+    Decode a WSQ compressed fingerprint image.
+    
+    WSQ (Wavelet Scalar Quantization) is the FBI's standard compression format
+    for fingerprint images. This function uses NBIS's WSQ decoder.
+    
+    Args:
+        wsq_data: Either bytes containing WSQ data, or path to WSQ file
+    
+    Returns:
+        Tuple of (image, ppi, lossy_flag):
+            - image: Grayscale uint8 numpy array
+            - ppi: Pixels per inch resolution
+            - lossy_flag: Whether lossy compression was used
+    
+    Raises:
+        RuntimeError: If NBIS extension is not available
+        RuntimeError: If WSQ decoding fails
+        FileNotFoundError: If file path provided but doesn't exist
+    
+    Example:
+        >>> # From file
+        >>> img, ppi, lossy = decode_wsq('fingerprint.wsq')
+        >>> # From bytes
+        >>> with open('fingerprint.wsq', 'rb') as f:
+        >>>     img, ppi, lossy = decode_wsq(f.read())
+    """
+    try:
+        from . import _nbis_ext
+    except ImportError:
+        raise RuntimeError("NBIS extension not available. Please build/install pynbis properly.")
+    
+    # If path provided, read file
+    if isinstance(wsq_data, (str, Path)):
+        filepath = Path(wsq_data)
+        if not filepath.exists():
+            raise FileNotFoundError(f"File not found: {filepath}")
+        with open(filepath, 'rb') as f:
+            wsq_data = f.read()
+    
+    if not isinstance(wsq_data, bytes):
+        raise TypeError("wsq_data must be bytes or file path")
+    
+    # Decode using NBIS
+    image, ppi, lossyflag = _nbis_ext.decode_wsq(wsq_data)
+    
+    return image, ppi, bool(lossyflag)
+

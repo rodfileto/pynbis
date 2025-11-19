@@ -5,9 +5,9 @@
 
 **Architecture**
 - **Flow:** Python validates inputs → C extension runs NBIS → Python returns typed results. Binarized image from MINDTCT is cached on `Fingerprint`.
-- **NBIS Sources:** Compiled directly from `nbis_src/**` (bozorth3, mindtct, nfiq, commonnbis). Do not modify NBIS sources unless adding missing deps.
-- **Extension API:** `_nbis_ext.extract_minutiae(image, ppi)`, `_nbis_ext.match_fingerprints(probe, gallery)`, `_nbis_ext.compute_nfiq(image, ppi)`, `_nbis_ext.match_xyt(probe_list, gallery_list)`.
-- **Python API:** See `pynbis/__init__.py` exports: `extract_minutiae`, `match_fingerprints`, `compute_quality`, `match_minutiae`, and `Fingerprint`.
+- **NBIS Sources:** Compiled directly from `nbis_src/**` (bozorth3, mindtct, nfiq, commonnbis, imgtools/wsq+jpegl). Do not modify NBIS sources unless adding missing deps.
+- **Extension API:** `_nbis_ext.extract_minutiae(image, ppi)`, `_nbis_ext.match_fingerprints(probe, gallery)`, `_nbis_ext.compute_nfiq(image, ppi)`, `_nbis_ext.match_xyt(probe_list, gallery_list)`, `_nbis_ext.decode_wsq(wsq_bytes)`.
+- **Python API:** See `pynbis/__init__.py` exports: `extract_minutiae`, `match_fingerprints`, `compute_quality`, `match_minutiae`, `Fingerprint`, and `decode_wsq`.
 
 **Build & Test**
 - **Dev install (Linux):** ensure build tools, then install to compile the C extension.

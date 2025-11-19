@@ -28,6 +28,7 @@ or FITNESS FOR A PARTICULAR PURPOSE or for any purpose whatsoever.
 #include "bozorth.h"
 #include "lfs.h"
 #include "nfiq.h"
+#include "wsq.h"
 
 /*******************************************************************************
  * Define global variables needed by NBIS libraries
@@ -42,6 +43,9 @@ int verbose_load = 0;
 int verbose_bozorth = 0;
 int verbose_threshold = 0;
 FILE *errorfp = NULL;  /* Error output stream */
+
+/* WSQ globals */
+int debug = 0;
 
 /*******************************************************************************
  * Helper Functions
@@ -408,6 +412,67 @@ static PyObject* nbis_match_xyt(PyObject *self, PyObject *args) {
 }
 
 /*******************************************************************************
+ * WSQ Decoding
+ ******************************************************************************/
+
+static PyObject* nbis_decode_wsq(PyObject* self, PyObject* args) {
+    PyObject *wsq_bytes_obj;
+    unsigned char *wsq_data;
+    Py_ssize_t wsq_len;
+    unsigned char *decoded_data = NULL;
+    int width, height, depth, ppi, lossyflag;
+    int ret;
+    npy_intp dims[2];
+    PyArrayObject *result_array;
+    
+    /* Parse arguments: bytes object containing WSQ data */
+    if (!PyArg_ParseTuple(args, "O", &wsq_bytes_obj)) {
+        return NULL;
+    }
+    
+    /* Get buffer from bytes object */
+    if (PyBytes_AsStringAndSize(wsq_bytes_obj, (char**)&wsq_data, &wsq_len) < 0) {
+        PyErr_SetString(PyExc_TypeError, "Expected bytes object");
+        return NULL;
+    }
+    
+    /* Decode WSQ data */
+    ret = wsq_decode_mem(&decoded_data, &width, &height, &depth, &ppi, &lossyflag,
+                        wsq_data, (int)wsq_len);
+    
+    if (ret != 0) {
+        if (decoded_data) free(decoded_data);
+        PyErr_Format(PyExc_RuntimeError, "WSQ decoding failed with code %d", ret);
+        return NULL;
+    }
+    
+    if (depth != 8) {
+        free(decoded_data);
+        PyErr_Format(PyExc_ValueError, "Unexpected bit depth %d (expected 8)", depth);
+        return NULL;
+    }
+    
+    /* Create NumPy array */
+    dims[0] = height;
+    dims[1] = width;
+    result_array = (PyArrayObject*)PyArray_SimpleNew(2, dims, NPY_UINT8);
+    
+    if (result_array == NULL) {
+        free(decoded_data);
+        return NULL;
+    }
+    
+    /* Copy data to array */
+    memcpy(PyArray_DATA(result_array), decoded_data, height * width);
+    
+    /* Free NBIS-allocated memory */
+    free(decoded_data);
+    
+    /* Return tuple (image, ppi, lossyflag) */
+    return Py_BuildValue("(Oii)", result_array, ppi, lossyflag);
+}
+
+/*******************************************************************************
  * Module Definition
  ******************************************************************************/
 
@@ -443,6 +508,13 @@ static PyMethodDef NBISMethods[] = {
      "    gallery: list of minutiae dicts with keys: x, y, direction\n\n"
      "Returns:\n"
      "    int: match score (higher = better match)"},
+    
+    {"decode_wsq", nbis_decode_wsq, METH_VARARGS,
+     "Decode WSQ compressed fingerprint image.\n\n"
+     "Args:\n"
+     "    wsq_data: bytes object containing WSQ compressed data\n\n"
+     "Returns:\n"
+     "    tuple: (image array, ppi, lossyflag)"},
     
     {NULL, NULL, 0, NULL}
 };

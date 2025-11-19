@@ -8,7 +8,14 @@ NFIQ (NIST Fingerprint Image Quality) scores.
 """
 
 import numpy as np
+from pathlib import Path
 from pynbis import compute_quality, Fingerprint
+
+try:
+    from imageio.v2 import imread
+    HAS_IMAGEIO = True
+except ImportError:
+    HAS_IMAGEIO = False
 
 def interpret_nfiq(quality_value):
     """Interpret NFIQ score and return detailed information."""
@@ -25,17 +32,48 @@ def interpret_nfiq(quality_value):
     else:
         return ("Unknown", "Invalid quality score", "Gray")
 
+def load_sample_image():
+    """Load a real fingerprint image if available, else generate random."""
+    fingerprints_dir = Path(__file__).parent.parent / "data" / "fingerprints"
+    
+    if HAS_IMAGEIO and fingerprints_dir.exists():
+        image_files = list(fingerprints_dir.glob("*.jpg")) + list(fingerprints_dir.glob("*.png"))
+        if len(image_files) >= 1:
+            try:
+                image = imread(image_files[0]).astype(np.uint8)
+                if image.ndim == 3:
+                    image = image[:, :, 0]
+                print(f"Loaded real fingerprint: {image_files[0].name}\n")
+                return image, True
+            except Exception:
+                pass
+    
+    print("Using random image (no real fingerprint found)\n")
+    return np.random.randint(0, 256, (480, 640), dtype=np.uint8), False
+
 def main():
     print("PyNBIS Example 3: Quality Assessment (NFIQ)")
     print("=" * 50)
     
-    # Generate sample fingerprint images with different characteristics
-    # In practice, you would load real fingerprint images
-    images = {
-        "Sample 1": np.random.randint(0, 256, (480, 640), dtype=np.uint8),
-        "Sample 2": np.random.randint(50, 200, (480, 640), dtype=np.uint8),
-        "Sample 3": np.random.randint(100, 150, (480, 640), dtype=np.uint8),
-    }
+    # Load real fingerprint or generate random
+    base_image, is_real = load_sample_image()
+    
+    # Create variations for comparison
+    if is_real:
+        # Use real image with different crops/regions
+        h, w = base_image.shape
+        images = {
+            "Full image": base_image,
+            "Top half": base_image[:h//2, :],
+            "Bottom half": base_image[h//2:, :],
+        }
+    else:
+        # Generate sample fingerprint images with different characteristics
+        images = {
+            "Sample 1": np.random.randint(0, 256, (480, 640), dtype=np.uint8),
+            "Sample 2": np.random.randint(50, 200, (480, 640), dtype=np.uint8),
+            "Sample 3": np.random.randint(100, 150, (480, 640), dtype=np.uint8),
+        }
     
     # Method 1: Functional API
     print("\n1. Using Functional API:")

@@ -47,14 +47,29 @@ def get_nbis_sources():
         "mlp",      # Multi-layer perceptron (for NFIQ)
         "ihead",    # Image header utilities
         "image",    # Image manipulation
+        "fet",      # Feature file support (used by WSQ)
     ]
+    
+    # WSQ codec sources (for loading WSQ compressed fingerprints)
+    # Also includes JPEG-L support which WSQ depends on
+    imgtools_subdirs = [
+        "wsq",     # WSQ compression/decompression
+        "jpegl",   # JPEG lossless (utilities used by WSQ)
+    ]
+    
+    for subdir in imgtools_subdirs:
+        src_dir = nbis_src / "imgtools" / "src" / "lib" / subdir
+        if src_dir.exists():
+            for f in src_dir.glob("*.c"):
+                rel = Path(os.path.relpath(f, here)).as_posix()
+                sources.append(rel)
     
     for subdir in common_subdirs:
         src_dir = nbis_src / "commonnbis" / "src" / "lib" / subdir
         if src_dir.exists():
             c_files = list(src_dir.glob("*.c"))
             # Exclude problematic files that have extra dependencies
-            excluded = ['nistcom.c', 'readihdr.c']
+            excluded = ['readihdr.c']  # nistcom.c is needed for WSQ
             for f in c_files:
                 if f.name not in excluded:
                     rel = Path(os.path.relpath(f, here)).as_posix()
