@@ -24,7 +24,7 @@
 
 ## Installation
 
-### From PyPI (Recommended)
+### From PyPI (Coming soon)
 ```bash
 pip install pynbis
 ```
